@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Skills Hub</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Shared AI operating layer</p>
+          <h1>Skills Hub</h1>
+        </div>
+        <div class="quick-stats" aria-label="Hub summary">
+          <div><strong id="skillCount">12</strong><span>skills</span></div>
+          <div><strong>3</strong><span>agents</span></div>
+          <div><strong id="activeCount">12</strong><span>visible</span></div>
+        </div>
+      </header>
+
+      <section class="agent-grid" aria-label="Agent workspaces">
+        <article class="agent claude">
+          <div class="agent-icon">C</div>
+          <div>
+            <h2>Claude</h2>
+            <p>Reasoning, drafting, research synthesis, critique, and long-context project thinking.</p>
+          </div>
+        </article>
+        <article class="agent codex">
+          <div class="agent-icon">X</div>
+          <div>
+            <h2>Codex</h2>
+            <p>Code changes, repo navigation, tests, local tooling, artifacts, and implementation work.</p>
+          </div>
+        </article>
+        <article class="agent hermes">
+          <div class="agent-icon">H</div>
+          <div>
+            <h2>Hermes</h2>
+            <p>Routing, automations, handoffs, task tracking, reminders, and cross-agent coordination.</p>
+          </div>
+        </article>
+      </section>
+
+      <section class="workshop" aria-label="Skill workshop">
+        <form id="skillForm" class="skill-form">
+          <input id="skillId" type="hidden" />
+          <div class="form-head">
+            <div>
+              <p class="eyebrow">Collaborative workshop</p>
+              <h2 id="formTitle">Add a skill</h2>
+            </div>
+            <div class="form-actions">
+              <button id="cancelEdit" class="ghost-button" type="button" hidden>Cancel</button>
+              <button class="primary-button" type="submit">Save Skill</button>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <label>
+              <span>Name</span>
+              <input id="titleInput" required maxlength="64" placeholder="Skill name" />
+            </label>
+            <label>
+              <span>Agent</span>
+              <select id="agentInput">
+                <option>Claude</option>
+                <option>Codex</option>
+                <option>Hermes</option>
+              </select>
+            </label>
+            <label>
+              <span>Lane</span>
+              <select id="laneInput">
+                <option value="thinkingCards">Thinking</option>
+                <option value="makingCards">Making</option>
+                <option value="orchestratingCards">Orchestrating</option>
+              </select>
+            </label>
+            <label>
+              <span>Status</span>
+              <select id="statusInput">
+                <option>Draft</option>
+                <option selected>Active</option>
+                <option>Needs review</option>
+              </select>
+            </label>
+            <label>
+              <span>Owner</span>
+              <input id="ownerInput" maxlength="40" placeholder="Team, person, or agent" />
+            </label>
+            <label>
+              <span>Tags</span>
+              <input id="tagsInput" placeholder="research, release, QA" />
+            </label>
+            <label class="wide">
+              <span>Summary</span>
+              <textarea id="summaryInput" required maxlength="180" placeholder="What this skill does"></textarea>
+            </label>
+          </div>
+        </form>
+
+        <div class="library-tools" aria-label="Library tools">
+          <button id="exportButton" class="ghost-button" type="button">Export JSON</button>
+          <label class="import-button">
+            <span>Import JSON</span>
+            <input id="importInput" type="file" accept="application/json,.json" />
+          </label>
+          <button id="resetButton" class="danger-button" type="button">Reset Library</button>
+        </div>
+      </section>
+
+      <section class="cloud-panel" aria-label="Supabase cloud sync">
+        <div>
+          <p class="eyebrow">Supabase sync</p>
+          <h2>Shared library</h2>
+          <p id="syncStatus">Local mode. Connect Supabase to share edits with other people.</p>
+        </div>
+        <form id="supabaseForm" class="cloud-form">
+          <label>
+            <span>Project URL</span>
+            <input id="supabaseUrlInput" type="url" placeholder="https://project.supabase.co" />
+          </label>
+          <label>
+            <span>Anon key</span>
+            <input id="supabaseKeyInput" type="password" placeholder="Paste public anon key" />
+          </label>
+          <div class="cloud-actions">
+            <button class="primary-button" type="submit">Connect</button>
+            <button id="syncNowButton" class="ghost-button" type="button">Sync Now</button>
+            <button id="disconnectButton" class="ghost-button" type="button">Disconnect</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="controls" aria-label="Skill filters">
+        <label class="search">
+          <span>Search</span>
+          <input id="searchInput" type="search" placeholder="Find a skill, agent, or workflow" />
+        </label>
+        <div class="filters" role="group" aria-label="Filter by agent">
+          <button class="filter active" data-filter="all" type="button">All</button>
+          <button class="filter" data-filter="Claude" type="button">Claude</button>
+          <button class="filter" data-filter="Codex" type="button">Codex</button>
+          <button class="filter" data-filter="Hermes" type="button">Hermes</button>
+        </div>
+      </section>
+
+      <section class="board" aria-label="Skills board">
+        <div class="lane">
+          <div class="lane-title">
+            <h2>Thinking</h2>
+            <span>Strategy and synthesis</span>
+          </div>
+          <div class="cards" id="thinkingCards"></div>
+        </div>
+        <div class="lane">
+          <div class="lane-title">
+            <h2>Making</h2>
+            <span>Build and verify</span>
+          </div>
+          <div class="cards" id="makingCards"></div>
+        </div>
+        <div class="lane">
+          <div class="lane-title">
+            <h2>Orchestrating</h2>
+            <span>Move work forward</span>
+          </div>
+          <div class="cards" id="orchestratingCards"></div>
+        </div>
+      </section>
+    </main>
+
+    <template id="skillTemplate">
+      <article class="skill-card">
+        <div class="skill-head">
+          <h3></h3>
+          <span class="agent-tag"></span>
+        </div>
+        <p></p>
+        <div class="collab-row"></div>
+        <div class="skill-meta"></div>
+        <div class="card-actions">
+          <button class="edit-skill" type="button">Edit</button>
+          <button class="delete-skill" type="button">Delete</button>
+        </div>
+      </article>
+    </template>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
