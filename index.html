@@ -15,7 +15,7 @@
         </div>
         <div class="quick-stats" aria-label="Hub summary">
           <div><strong id="skillCount">12</strong><span>skills</span></div>
-          <div><strong>3</strong><span>agents</span></div>
+          <div><strong>5</strong><span>agents</span></div>
           <div><strong id="activeCount">12</strong><span>visible</span></div>
         </div>
       </header>
@@ -40,6 +40,20 @@
           <div>
             <h2>Hermes</h2>
             <p>Routing, automations, handoffs, task tracking, reminders, and cross-agent coordination.</p>
+          </div>
+        </article>
+        <article class="agent openclaw">
+          <div class="agent-icon">O</div>
+          <div>
+            <h2>OpenClaw</h2>
+            <p>Tool control, browser actions, environment interaction, and grounded task execution.</p>
+          </div>
+        </article>
+        <article class="agent comfyui">
+          <div class="agent-icon">U</div>
+          <div>
+            <h2>ComfyUI</h2>
+            <p>Image workflows, node graphs, prompt pipelines, visual assets, and repeatable generations.</p>
           </div>
         </article>
       </section>
@@ -69,6 +83,8 @@
                 <option>Claude</option>
                 <option>Codex</option>
                 <option>Hermes</option>
+                <option>OpenClaw</option>
+                <option>ComfyUI</option>
               </select>
             </label>
             <label>
@@ -103,7 +119,9 @@
         </form>
 
         <div class="library-tools" aria-label="Library tools">
-          <button id="exportButton" class="ghost-button" type="button">Export JSON</button>
+          <button id="exportJsonButton" class="ghost-button" type="button">Export JSON</button>
+          <button id="exportMarkdownButton" class="ghost-button" type="button">Export MD</button>
+          <button id="exportToonButton" class="ghost-button" type="button">Export TOON</button>
           <label class="import-button">
             <span>Import JSON</span>
             <input id="importInput" type="file" accept="application/json,.json" />
@@ -120,15 +138,26 @@
         </div>
         <form id="supabaseForm" class="cloud-form">
           <label>
-            <span>Project URL</span>
-            <input id="supabaseUrlInput" type="url" placeholder="https://project.supabase.co" />
+            <span>Email login</span>
+            <input id="emailInput" type="email" placeholder="person@example.com" />
           </label>
-          <label>
-            <span>Anon key</span>
-            <input id="supabaseKeyInput" type="password" placeholder="Paste public anon key" />
-          </label>
+          <div class="setup-panel">
+            <button id="advancedSetupButton" class="ghost-button" type="button">Advanced Setup</button>
+            <div id="credentialFields" class="credential-fields" hidden>
+              <label>
+                <span>Project URL</span>
+                <input id="supabaseUrlInput" type="url" placeholder="https://project.supabase.co" />
+              </label>
+              <label>
+                <span>Anon key</span>
+                <input id="supabaseKeyInput" type="password" placeholder="Paste public anon key" />
+              </label>
+            </div>
+          </div>
           <div class="cloud-actions">
             <button class="primary-button" type="submit">Connect</button>
+            <button id="loginButton" class="ghost-button" type="button">Send Magic Link</button>
+            <button id="logoutButton" class="ghost-button" type="button">Log Out</button>
             <button id="syncNowButton" class="ghost-button" type="button">Sync Now</button>
             <button id="disconnectButton" class="ghost-button" type="button">Disconnect</button>
           </div>
@@ -145,6 +174,8 @@
           <button class="filter" data-filter="Claude" type="button">Claude</button>
           <button class="filter" data-filter="Codex" type="button">Codex</button>
           <button class="filter" data-filter="Hermes" type="button">Hermes</button>
+          <button class="filter" data-filter="OpenClaw" type="button">OpenClaw</button>
+          <button class="filter" data-filter="ComfyUI" type="button">ComfyUI</button>
         </div>
       </section>
 
@@ -189,6 +220,7 @@
       </article>
     </template>
 
+    <script src="config.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="script.js"></script>
   </body>

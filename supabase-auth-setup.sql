@@ -13,27 +13,35 @@ create table if not exists public.skills (
 alter table public.skills enable row level security;
 
 drop policy if exists "Anyone can read skills" on public.skills;
-create policy "Anyone can read skills"
+drop policy if exists "Anyone can add skills" on public.skills;
+drop policy if exists "Anyone can update skills" on public.skills;
+drop policy if exists "Anyone can delete skills" on public.skills;
+drop policy if exists "Authenticated users can read skills" on public.skills;
+drop policy if exists "Authenticated users can add skills" on public.skills;
+drop policy if exists "Authenticated users can update skills" on public.skills;
+drop policy if exists "Authenticated users can delete skills" on public.skills;
+
+create policy "Authenticated users can read skills"
   on public.skills for select
+  to authenticated
   using (true);
 
-drop policy if exists "Anyone can add skills" on public.skills;
-create policy "Anyone can add skills"
+create policy "Authenticated users can add skills"
   on public.skills for insert
+  to authenticated
   with check (true);
 
-drop policy if exists "Anyone can update skills" on public.skills;
-create policy "Anyone can update skills"
+create policy "Authenticated users can update skills"
   on public.skills for update
+  to authenticated
   using (true)
   with check (true);
 
-drop policy if exists "Anyone can delete skills" on public.skills;
-create policy "Anyone can delete skills"
+create policy "Authenticated users can delete skills"
   on public.skills for delete
+  to authenticated
   using (true);
 
-grant select, insert, update, delete on public.skills to anon;
 grant select, insert, update, delete on public.skills to authenticated;
 
 do $$

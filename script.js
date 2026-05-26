@@ -2,6 +2,7 @@ const STORAGE_KEY = "skills-hub-library";
 const SUPABASE_URL_KEY = "skills-hub-supabase-url";
 const SUPABASE_ANON_KEY = "skills-hub-supabase-anon-key";
 const SUPABASE_TABLE = "skills";
+const AGENTS = ["Claude", "Codex", "Hermes", "OpenClaw", "ComfyUI"];
 
 const starterSkills = [
   {
@@ -124,6 +125,46 @@ const starterSkills = [
     summary: "Package outcomes into a concise handoff with changed files, checks, risks, and next steps.",
     tags: ["handoff", "release", "summary"],
   },
+  {
+    id: "browser-operation",
+    title: "Browser Operation",
+    agent: "OpenClaw",
+    lane: "makingCards",
+    status: "Active",
+    owner: "OpenClaw",
+    summary: "Open pages, inspect visible state, click controls, fill forms, and report grounded outcomes.",
+    tags: ["browser", "actions", "inspection"],
+  },
+  {
+    id: "environment-control",
+    title: "Environment Control",
+    agent: "OpenClaw",
+    lane: "orchestratingCards",
+    status: "Draft",
+    owner: "OpenClaw",
+    summary: "Coordinate local tools, app windows, and manual checkpoints for tasks that need direct interaction.",
+    tags: ["tools", "handoff", "control"],
+  },
+  {
+    id: "image-workflow",
+    title: "Image Workflow",
+    agent: "ComfyUI",
+    lane: "makingCards",
+    status: "Active",
+    owner: "ComfyUI",
+    summary: "Build repeatable node graphs for image generation, refinement, upscaling, and batch asset creation.",
+    tags: ["images", "nodes", "generation"],
+  },
+  {
+    id: "visual-iteration",
+    title: "Visual Iteration",
+    agent: "ComfyUI",
+    lane: "thinkingCards",
+    status: "Active",
+    owner: "ComfyUI",
+    summary: "Turn references, prompts, seeds, and review notes into controlled visual variants.",
+    tags: ["prompts", "variants", "assets"],
+  },
 ];
 
 const template = document.querySelector("#skillTemplate");
@@ -142,22 +183,31 @@ const statusInput = document.querySelector("#statusInput");
 const ownerInput = document.querySelector("#ownerInput");
 const tagsInput = document.querySelector("#tagsInput");
 const summaryInput = document.querySelector("#summaryInput");
-const exportButton = document.querySelector("#exportButton");
 const importInput = document.querySelector("#importInput");
 const resetButton = document.querySelector("#resetButton");
 const cloudPanel = document.querySelector(".cloud-panel");
 const supabaseForm = document.querySelector("#supabaseForm");
 const supabaseUrlInput = document.querySelector("#supabaseUrlInput");
 const supabaseKeyInput = document.querySelector("#supabaseKeyInput");
+const credentialFields = document.querySelector("#credentialFields");
+const advancedSetupButton = document.querySelector("#advancedSetupButton");
+const emailInput = document.querySelector("#emailInput");
 const syncStatus = document.querySelector("#syncStatus");
 const syncNowButton = document.querySelector("#syncNowButton");
 const disconnectButton = document.querySelector("#disconnectButton");
+const loginButton = document.querySelector("#loginButton");
+const logoutButton = document.querySelector("#logoutButton");
+const exportJsonButton = document.querySelector("#exportJsonButton");
+const exportMarkdownButton = document.querySelector("#exportMarkdownButton");
+const exportToonButton = document.querySelector("#exportToonButton");
 
 let skills = loadSkills();
+skills = mergeStarterSkills(skills);
 let currentFilter = "all";
 let supabaseClient = null;
 let supabaseChannel = null;
 let cloudReady = false;
+let currentUser = null;
 
 function loadSkills() {
   try {
@@ -172,12 +222,22 @@ function loadSkills() {
   return starterSkills.map(normalizeSkill);
 }
 
+function mergeStarterSkills(currentSkills) {
+  const existingIds = new Set(currentSkills.map((skill) => skill.id));
+  const missingStarterSkills = starterSkills
+    .map(normalizeSkill)
+    .filter((skill) => !existingIds.has(skill.id));
+  const mergedSkills = [...currentSkills, ...missingStarterSkills];
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedSkills));
+  return mergedSkills;
+}
+
 function normalizeSkill(skill) {
   const title = String(skill.title || "Untitled skill").trim();
   return {
     id: String(skill.id || createId(title)),
     title,
-    agent: ["Claude", "Codex", "Hermes"].includes(skill.agent) ? skill.agent : "Claude",
+    agent: AGENTS.includes(skill.agent) ? skill.agent : "Claude",
     lane: ["thinkingCards", "makingCards", "orchestratingCards"].includes(skill.lane)
       ? skill.lane
       : "thinkingCards",
@@ -231,6 +291,22 @@ function setSyncStatus(message, state = "") {
   syncStatus.textContent = message;
   cloudPanel.classList.toggle("connected", state === "connected");
   cloudPanel.classList.toggle("error", state === "error");
+}
+
+function getConfiguredSupabase() {
+  const config = window.SKILLS_HUB_SUPABASE || {};
+  return {
+    url: config.url || localStorage.getItem(SUPABASE_URL_KEY) || "",
+    anonKey: config.anonKey || localStorage.getItem(SUPABASE_ANON_KEY) || "",
+    requireLogin: Boolean(config.requireLogin),
+    isBundled: Boolean(config.url && config.anonKey),
+  };
+}
+
+function updateCredentialVisibility(isBundled) {
+  credentialFields.hidden = true;
+  advancedSetupButton.hidden = isBundled;
+  advancedSetupButton.textContent = "Advanced Setup";
 }
 
 function parseTags(value) {
@@ -319,28 +395,35 @@ function render() {
 }
 
 async function connectSupabase(url, anonKey) {
+  const configured = getConfiguredSupabase();
+  const nextUrl = url || configured.url;
+  const nextAnonKey = anonKey || configured.anonKey;
   const createClient = await loadSupabaseCreateClient();
   if (!createClient) {
     setSyncStatus("Supabase library did not load. Check your internet connection.", "error");
     return;
   }
 
-  if (!url || !anonKey) {
+  if (!nextUrl || !nextAnonKey) {
     setSyncStatus("Paste your Supabase project URL and anon key to connect.", "error");
     return;
   }
 
-  supabaseClient = createClient(url, anonKey);
-  localStorage.setItem(SUPABASE_URL_KEY, url);
-  localStorage.setItem(SUPABASE_ANON_KEY, anonKey);
-  supabaseUrlInput.value = url;
-  supabaseKeyInput.value = anonKey;
+  supabaseClient = createClient(nextUrl, nextAnonKey);
+  if (!configured.isBundled) {
+    localStorage.setItem(SUPABASE_URL_KEY, nextUrl);
+    localStorage.setItem(SUPABASE_ANON_KEY, nextAnonKey);
+  }
+  supabaseUrlInput.value = configured.isBundled ? "" : nextUrl;
+  supabaseKeyInput.value = configured.isBundled ? "" : nextAnonKey;
+  updateCredentialVisibility(configured.isBundled);
+  await updateAuthState();
 
   await pullCloudSkills();
   await pushAllSkills();
   subscribeToCloudChanges();
   cloudReady = true;
-  setSyncStatus("Connected. Edits are syncing through Supabase.", "connected");
+  setSyncStatus(getConnectedMessage(), "connected");
 }
 
 async function loadSupabaseCreateClient() {
@@ -450,7 +533,68 @@ function disconnectSupabase() {
   localStorage.removeItem(SUPABASE_ANON_KEY);
   supabaseUrlInput.value = "";
   supabaseKeyInput.value = "";
+  currentUser = null;
   setSyncStatus("Local mode. Connect Supabase to share edits with other people.");
+}
+
+async function updateAuthState() {
+  if (!supabaseClient) {
+    currentUser = null;
+    return;
+  }
+
+  const {
+    data: { user },
+  } = await supabaseClient.auth.getUser();
+  currentUser = user;
+}
+
+function getConnectedMessage() {
+  if (currentUser?.email) {
+    return `Connected as ${currentUser.email}. Edits are syncing through Supabase.`;
+  }
+
+  return "Connected. Edits are syncing through Supabase.";
+}
+
+async function sendMagicLink() {
+  if (!supabaseClient) {
+    await connectSupabase(supabaseUrlInput.value.trim(), supabaseKeyInput.value.trim());
+  }
+
+  if (!supabaseClient) {
+    return;
+  }
+
+  const email = emailInput.value.trim();
+  if (!email) {
+    setSyncStatus("Enter an email address to send a magic link.", "error");
+    return;
+  }
+
+  const { error } = await supabaseClient.auth.signInWithOtp({
+    email,
+    options: {
+      emailRedirectTo: window.location.href,
+    },
+  });
+
+  if (error) {
+    setSyncStatus(`Login failed: ${error.message}`, "error");
+    return;
+  }
+
+  setSyncStatus(`Magic link sent to ${email}. Open it to finish login.`, "connected");
+}
+
+async function logout() {
+  if (!supabaseClient) {
+    return;
+  }
+
+  await supabaseClient.auth.signOut();
+  currentUser = null;
+  setSyncStatus("Logged out. Local editing still works.", "connected");
 }
 
 function fillForm(skill) {
@@ -539,14 +683,73 @@ filterButtons.forEach((button) => {
 
 searchInput.addEventListener("input", render);
 
-exportButton.addEventListener("click", () => {
-  const blob = new Blob([JSON.stringify(skills, null, 2)], { type: "application/json" });
+function downloadFile(filename, content, type) {
+  const blob = new Blob([content], { type });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = "skills-hub-library.json";
+  link.download = filename;
   link.click();
   URL.revokeObjectURL(url);
+}
+
+function formatMarkdown() {
+  const grouped = skills.reduce((groups, skill) => {
+    groups[skill.agent] ||= [];
+    groups[skill.agent].push(skill);
+    return groups;
+  }, {});
+
+  const sections = Object.entries(grouped).map(([agent, agentSkills]) => {
+    const items = agentSkills
+      .map(
+        (skill) => [
+          `### ${skill.title}`,
+          `- Lane: ${skill.lane.replace("Cards", "")}`,
+          `- Status: ${skill.status}`,
+          `- Owner: ${skill.owner}`,
+          `- Tags: ${skill.tags.join(", ") || "none"}`,
+          "",
+          skill.summary,
+        ].join("\n"),
+      )
+      .join("\n\n");
+
+    return `## ${agent}\n\n${items}`;
+  });
+
+  return ["# Skills Hub Library", "", ...sections].join("\n");
+}
+
+function formatToon() {
+  const header = "skills[id,title,agent,lane,status,owner,tags,summary]";
+  const rows = skills.map((skill) => {
+    const values = [
+      skill.id,
+      skill.title,
+      skill.agent,
+      skill.lane.replace("Cards", ""),
+      skill.status,
+      skill.owner,
+      skill.tags.join("|"),
+      skill.summary,
+    ];
+    return values.map((value) => JSON.stringify(value)).join(",");
+  });
+
+  return [header, ...rows].join("\n");
+}
+
+exportJsonButton.addEventListener("click", () => {
+  downloadFile("skills-hub-library.json", JSON.stringify(skills, null, 2), "application/json");
+});
+
+exportMarkdownButton.addEventListener("click", () => {
+  downloadFile("skills-hub-library.md", formatMarkdown(), "text/markdown");
+});
+
+exportToonButton.addEventListener("click", () => {
+  downloadFile("skills-hub-library.toon", formatToon(), "text/plain");
 });
 
 importInput.addEventListener("change", async () => {
@@ -591,6 +794,9 @@ supabaseForm.addEventListener("submit", async (event) => {
   await connectSupabase(supabaseUrlInput.value.trim(), supabaseKeyInput.value.trim());
 });
 
+loginButton.addEventListener("click", sendMagicLink);
+logoutButton.addEventListener("click", logout);
+
 syncNowButton.addEventListener("click", async () => {
   if (!supabaseClient) {
     setSyncStatus("Connect Supabase before syncing.", "error");
@@ -605,12 +811,18 @@ syncNowButton.addEventListener("click", async () => {
 
 disconnectButton.addEventListener("click", disconnectSupabase);
 
+advancedSetupButton.addEventListener("click", () => {
+  credentialFields.hidden = !credentialFields.hidden;
+  advancedSetupButton.textContent = credentialFields.hidden ? "Advanced Setup" : "Hide Setup";
+});
+
 render();
 
-const savedSupabaseUrl = localStorage.getItem(SUPABASE_URL_KEY);
-const savedSupabaseKey = localStorage.getItem(SUPABASE_ANON_KEY);
-if (savedSupabaseUrl && savedSupabaseKey) {
-  connectSupabase(savedSupabaseUrl, savedSupabaseKey);
+const configuredSupabase = getConfiguredSupabase();
+updateCredentialVisibility(configuredSupabase.isBundled);
+if (configuredSupabase.url && configuredSupabase.anonKey) {
+  connectSupabase(configuredSupabase.url, configuredSupabase.anonKey);
 } else {
-  supabaseUrlInput.value = savedSupabaseUrl || "";
+  supabaseUrlInput.value = configuredSupabase.url || "";
+  setSyncStatus("Enter email after the app owner connects Supabase. Advanced setup is only for the app owner.");
 }

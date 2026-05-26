@@ -9,6 +9,8 @@
   --blue: #286ca8;
   --red: #ad493d;
   --gold: #b98524;
+  --violet: #6b5bbd;
+  --teal: #16808a;
   --shadow: 0 18px 45px rgba(24, 38, 34, 0.12);
 }
 
@@ -102,7 +104,7 @@ h1 {
 
 .agent-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 14px;
 }
 
@@ -139,6 +141,14 @@ h1 {
 
 .hermes .agent-icon {
   background: var(--blue);
+}
+
+.openclaw .agent-icon {
+  background: var(--violet);
+}
+
+.comfyui .agent-icon {
+  background: var(--teal);
 }
 
 .agent h2 {
@@ -221,6 +231,19 @@ h1 {
   flex-wrap: wrap;
   grid-column: 1 / -1;
   gap: 8px;
+}
+
+.setup-panel {
+  display: grid;
+  gap: 10px;
+  align-content: end;
+}
+
+.credential-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  grid-column: 1 / -1;
 }
 
 .cloud-panel.connected {
@@ -376,8 +399,9 @@ h1 {
 }
 
 .filter {
-  min-width: 72px;
+  min-width: 78px;
   height: 40px;
+  padding: 0 12px;
   border: 1px solid var(--line);
   border-radius: 999px;
   color: var(--ink);
@@ -482,6 +506,14 @@ h1 {
   background: var(--blue);
 }
 
+.agent-tag.OpenClaw {
+  background: var(--violet);
+}
+
+.agent-tag.ComfyUI {
+  background: var(--teal);
+}
+
 .skill-meta {
   display: flex;
   flex-wrap: wrap;
@@ -570,7 +602,8 @@ h1 {
   .board,
   .workshop,
   .cloud-panel,
-  .cloud-form {
+  .cloud-form,
+  .credential-fields {
     grid-template-columns: 1fr;
   }
 
@@ -599,7 +632,7 @@ h1 {
 
   .filters {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
   }
 
   .form-grid {
