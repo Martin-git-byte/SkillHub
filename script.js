@@ -7,7 +7,7 @@ const AGENTS = ["Claude", "Codex", "Hermes", "OpenClaw", "ComfyUI"];
 const starterSkills = [
   {
     id: "research-synthesis",
-    title: "Research Synthesis",
+    title: "Research Synthesis",h
     agent: "Claude",
     lane: "thinkingCards",
     status: "Active",
@@ -776,7 +776,7 @@ importInput.addEventListener("change", async () => {
   }
 });
 
-resetButton.addEventListener("click", () => {
+resetButton.addEventListener("click", () => { if (!confirm("Reset all skills to defaults? This cannot be undone.")) return;
   if (!confirm("Reset the library to the starter skills?")) {
     return;
   }
