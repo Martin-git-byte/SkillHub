@@ -750,6 +750,8 @@ resetButton.addEventListener("click", () => {
 
 
 
+document.querySelector("#loginButton").addEventListener("click", sendMagicLink);
+
 render();
 
 const configuredSupabase = getConfiguredSupabase();
