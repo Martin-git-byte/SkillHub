@@ -359,6 +359,15 @@ h1 {
   pointer-events: none;
 }
 
+
+.action-button {
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
 .controls {
   display: flex;
   align-items: end;
