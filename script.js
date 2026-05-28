@@ -170,7 +170,6 @@ const starterSkills = [
 const template = document.querySelector("#skillTemplate");
 const searchInput = document.querySelector("#searchInput");
 const filterButtons = document.querySelectorAll(".filter");
-const activeCount = document.querySelector("#activeCount");
 const skillCount = document.querySelector("#skillCount");
 const skillForm = document.querySelector("#skillForm");
 const skillId = document.querySelector("#skillId");
@@ -373,8 +372,6 @@ function render() {
       lane.append(empty);
     }
   });
-
-  activeCount.textContent = visible.length;
   skillCount.textContent = skills.length;
 }
 
@@ -536,45 +533,22 @@ function getConnectedMessage() {
   return "Connected. Edits are syncing through Supabase.";
 }
 
-async function sendMagicLink() {
-  if (!supabaseClient) {
-    await connectSupabase(supabaseUrlInput.value.trim(), supabaseKeyInput.value.trim());
-  }
-
-  if (!supabaseClient) {
+async function unlock() {
+  const config = window.SKILLS_HUB_SUPABASE || {};
+  const pin = config.pin || "";
+  const entered = document.querySelector("#pinInput")?.value?.trim();
+  if (!pin) {
+    setSyncStatus("No PIN configured. Ask the app owner to set one in config.js.", "error");
     return;
   }
-
-  const email = emailInput.value.trim();
-  if (!email) {
-    setSyncStatus("Enter an email address to send a magic link.", "error");
+  if (entered !== pin) {
+    setSyncStatus("Incorrect PIN.", "error");
     return;
   }
-
-  const { error } = await supabaseClient.auth.signInWithOtp({
-    email,
-    options: {
-      emailRedirectTo: window.location.href,
-    },
-  });
-
-  if (error) {
-    setSyncStatus(`Login failed: ${error.message}`, "error");
-    return;
-  }
-
-  setSyncStatus(`Magic link sent to ${email}. Open it to finish login.`, "connected");
+  localStorage.setItem("skills-hub-pin-ok", "1");
+  await connectSupabase(config.url, config.anonKey);
 }
 
-async function logout() {
-  if (!supabaseClient) {
-    return;
-  }
-
-  await supabaseClient.auth.signOut();
-  currentUser = null;
-  setSyncStatus("Logged out. Local editing still works.", "connected");
-}
 
 function fillForm(skill) {
   skillId.value = skill.id;
@@ -750,13 +724,17 @@ resetButton.addEventListener("click", () => {
 
 
 
-document.querySelector("#loginButton").addEventListener("click", sendMagicLink);
+document.querySelector("#loginButton").addEventListener("click", unlock);
 
 render();
 
 const configuredSupabase = getConfiguredSupabase();
 if (configuredSupabase.url && configuredSupabase.anonKey) {
-  connectSupabase(configuredSupabase.url, configuredSupabase.anonKey);
+  if (localStorage.getItem("skills-hub-pin-ok") === "1") {
+    connectSupabase(configuredSupabase.url, configuredSupabase.anonKey);
+  } else {
+    setSyncStatus("Enter the PIN to sync your library.");
+  }
 } else {
   setSyncStatus("Supabase not configured. Contact the app owner.");
 }
