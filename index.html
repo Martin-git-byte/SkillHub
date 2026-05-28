@@ -79,7 +79,7 @@
           <div class="form-grid">
             <label>
               <span>Name</span>
-              <input id="titleInput" required maxlength="64" placeholder="Skill name" />
+              <input id="titleInput" required placeholder="Skill name" />
             </label>
             <label>
               <span>Agent</span>
@@ -125,7 +125,18 @@
             <span>Import JSON</span>
             <input id="importInput" type="file" accept="application/json,.json" />
           </label>
+          <label class="import-button action-button" id="importMarkdownButton">
+            <span>Import MD</span>
+            <input id="importMdInput" type="file" accept=".md,text/markdown" />
+          </label>
           <button id="resetButton" class="danger-button action-button" type="button">Reset Library</button>
+        </div>
+        <div class="paste-panel">
+          <label>
+            <span>Paste skill (JSON, MD or free text)</span>
+            <textarea id="pasteInput" placeholder="Paste anything here — a skill description, a JSON block, or freeform text. Press Parse to extract fields automatically."></textarea>
+          </label>
+          <button id="parseSkillButton" class="primary-button action-button" type="button">Parse &amp; Fill</button>
         </div>
       </section>
 
