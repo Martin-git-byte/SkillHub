@@ -7,7 +7,7 @@ const AGENTS = ["Claude", "Codex", "Hermes", "OpenClaw", "ComfyUI"];
 const starterSkills = [
   {
     id: "research-synthesis",
-    title: "Research Synthesis",h
+    title: "Research Synthesis",
     agent: "Claude",
     lane: "thinkingCards",
     status: "Active",
@@ -180,26 +180,15 @@ const titleInput = document.querySelector("#titleInput");
 const agentInput = document.querySelector("#agentInput");
 const laneInput = document.querySelector("#laneInput");
 const statusInput = document.querySelector("#statusInput");
-const ownerInput = document.querySelector("#ownerInput");
 const tagsInput = document.querySelector("#tagsInput");
 const summaryInput = document.querySelector("#summaryInput");
 const importInput = document.querySelector("#importInput");
 const resetButton = document.querySelector("#resetButton");
 const cloudPanel = document.querySelector(".cloud-panel");
-const supabaseForm = document.querySelector("#supabaseForm");
-const supabaseUrlInput = document.querySelector("#supabaseUrlInput");
-const supabaseKeyInput = document.querySelector("#supabaseKeyInput");
-const credentialFields = document.querySelector("#credentialFields");
-const advancedSetupButton = document.querySelector("#advancedSetupButton");
 const emailInput = document.querySelector("#emailInput");
 const syncStatus = document.querySelector("#syncStatus");
-const syncNowButton = document.querySelector("#syncNowButton");
-const disconnectButton = document.querySelector("#disconnectButton");
-const loginButton = document.querySelector("#loginButton");
-const logoutButton = document.querySelector("#logoutButton");
 const exportJsonButton = document.querySelector("#exportJsonButton");
 const exportMarkdownButton = document.querySelector("#exportMarkdownButton");
-const exportToonButton = document.querySelector("#exportToonButton");
 
 let skills = loadSkills();
 skills = mergeStarterSkills(skills);
@@ -303,11 +292,6 @@ function getConfiguredSupabase() {
   };
 }
 
-function updateCredentialVisibility(isBundled) {
-  credentialFields.hidden = true;
-  advancedSetupButton.hidden = isBundled;
-  advancedSetupButton.textContent = "Advanced Setup";
-}
 
 function parseTags(value) {
   return value
@@ -414,9 +398,6 @@ async function connectSupabase(url, anonKey) {
     localStorage.setItem(SUPABASE_URL_KEY, nextUrl);
     localStorage.setItem(SUPABASE_ANON_KEY, nextAnonKey);
   }
-  supabaseUrlInput.value = configured.isBundled ? "" : nextUrl;
-  supabaseKeyInput.value = configured.isBundled ? "" : nextAnonKey;
-  updateCredentialVisibility(configured.isBundled);
   await updateAuthState();
 
   await pullCloudSkills();
@@ -531,8 +512,6 @@ function disconnectSupabase() {
   cloudReady = false;
   localStorage.removeItem(SUPABASE_URL_KEY);
   localStorage.removeItem(SUPABASE_ANON_KEY);
-  supabaseUrlInput.value = "";
-  supabaseKeyInput.value = "";
   currentUser = null;
   setSyncStatus("Local mode. Connect Supabase to share edits with other people.");
 }
@@ -603,7 +582,6 @@ function fillForm(skill) {
   agentInput.value = skill.agent;
   laneInput.value = skill.lane;
   statusInput.value = skill.status;
-  ownerInput.value = skill.owner;
   tagsInput.value = skill.tags.join(", ");
   summaryInput.value = skill.summary;
 }
@@ -648,7 +626,7 @@ function collectFormSkill() {
     agent: agentInput.value,
     lane: laneInput.value,
     status: statusInput.value,
-    owner: ownerInput.value || agentInput.value,
+    owner: agentInput.value,
     summary: summaryInput.value,
     tags: parseTags(tagsInput.value),
   });
@@ -721,24 +699,6 @@ function formatMarkdown() {
   return ["# Skills Hub Library", "", ...sections].join("\n");
 }
 
-function formatToon() {
-  const header = "skills[id,title,agent,lane,status,owner,tags,summary]";
-  const rows = skills.map((skill) => {
-    const values = [
-      skill.id,
-      skill.title,
-      skill.agent,
-      skill.lane.replace("Cards", ""),
-      skill.status,
-      skill.owner,
-      skill.tags.join("|"),
-      skill.summary,
-    ];
-    return values.map((value) => JSON.stringify(value)).join(",");
-  });
-
-  return [header, ...rows].join("\n");
-}
 
 exportJsonButton.addEventListener("click", () => {
   downloadFile("skills-hub-library.json", JSON.stringify(skills, null, 2), "application/json");
@@ -748,9 +708,6 @@ exportMarkdownButton.addEventListener("click", () => {
   downloadFile("skills-hub-library.md", formatMarkdown(), "text/markdown");
 });
 
-exportToonButton.addEventListener("click", () => {
-  downloadFile("skills-hub-library.toon", formatToon(), "text/plain");
-});
 
 importInput.addEventListener("change", async () => {
   const [file] = importInput.files;
@@ -776,8 +733,8 @@ importInput.addEventListener("change", async () => {
   }
 });
 
-resetButton.addEventListener("click", () => { if (!confirm("Reset all skills to defaults? This cannot be undone.")) return;
-  if (!confirm("Reset the library to the starter skills?")) {
+resetButton.addEventListener("click", () => {
+  if (!confirm("Reset all skills to the starter library? This cannot be undone.")) {
     return;
   }
 
@@ -788,41 +745,16 @@ resetButton.addEventListener("click", () => { if (!confirm("Reset all skills to 
   render();
 });
 
-supabaseForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  setSyncStatus("Connecting to Supabase...");
-  await connectSupabase(supabaseUrlInput.value.trim(), supabaseKeyInput.value.trim());
-});
 
-loginButton.addEventListener("click", sendMagicLink);
-logoutButton.addEventListener("click", logout);
 
-syncNowButton.addEventListener("click", async () => {
-  if (!supabaseClient) {
-    setSyncStatus("Connect Supabase before syncing.", "error");
-    return;
-  }
 
-  setSyncStatus("Syncing with Supabase...");
-  await pullCloudSkills();
-  await pushAllSkills();
-  setSyncStatus("Synced with Supabase.", "connected");
-});
 
-disconnectButton.addEventListener("click", disconnectSupabase);
-
-advancedSetupButton.addEventListener("click", () => {
-  credentialFields.hidden = !credentialFields.hidden;
-  advancedSetupButton.textContent = credentialFields.hidden ? "Advanced Setup" : "Hide Setup";
-});
 
 render();
 
 const configuredSupabase = getConfiguredSupabase();
-updateCredentialVisibility(configuredSupabase.isBundled);
 if (configuredSupabase.url && configuredSupabase.anonKey) {
   connectSupabase(configuredSupabase.url, configuredSupabase.anonKey);
 } else {
-  supabaseUrlInput.value = configuredSupabase.url || "";
-  setSyncStatus("Enter email after the app owner connects Supabase. Advanced setup is only for the app owner.");
+  setSyncStatus("Supabase not configured. Contact the app owner.");
 }
