@@ -133,15 +133,15 @@
         <div>
           <p class="eyebrow">Supabase sync</p>
           <h2>Shared library</h2>
-          <p id="syncStatus">Local mode. Connect Supabase to share edits with other people.</p>
+          <p id="syncStatus">Enter PIN to sync your library.</p>
         </div>
         <div class="cloud-form">
           <label>
-            <span>Email login</span>
-            <input id="emailInput" type="email" placeholder="person@example.com" />
+            <span>PIN</span>
+            <input id="pinInput" type="password" placeholder="Enter shared PIN" autocomplete="current-password" />
           </label>
           <div class="cloud-actions">
-            <button id="loginButton" class="primary-button" type="button">Send Magic Link</button>
+            <button id="loginButton" class="primary-button action-button" type="button">Unlock</button>
           </div>
         </div>
       </section>
