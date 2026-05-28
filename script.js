@@ -726,6 +726,96 @@ resetButton.addEventListener("click", () => {
 
 document.querySelector("#loginButton").addEventListener("click", unlock);
 
+
+document.querySelector("#importMdInput").addEventListener("change", async () => {
+  const [file] = document.querySelector("#importMdInput").files;
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const parsed = parseMdSkills(text);
+    if (parsed.length === 0) throw new Error("No skill sections found in the file.");
+    skills = [...parsed, ...skills.filter(s => !parsed.find(p => p.id === s.id))];
+    saveSkills();
+    pushAllSkills();
+    resetForm();
+    render();
+    alert(`Imported ${parsed.length} skill(s) from Markdown.`);
+  } catch (error) {
+    alert(`Could not import MD: ${error.message}`);
+  } finally {
+    document.querySelector("#importMdInput").value = "";
+  }
+});
+
+function parseMdSkills(text) {
+  const sections = text.split(/^### /m).slice(1);
+  return sections.map(section => {
+    const lines = section.split("\n");
+    const title = lines[0].trim();
+    const body = lines.slice(1).join("\n");
+    const get = (key) => { const m = body.match(new RegExp("- " + key + ": (.+)")); return m ? m[1].trim() : ""; };
+    const tagsRaw = get("Tags"); 
+    return normalizeSkill({
+      id: createId(title),
+      title,
+      agent: get("Agent") || AGENTS.find(a => body.includes(a)) || "Claude",
+      lane: { thinking: "thinkingCards", making: "makingCards", orchestrating: "orchestratingCards" }[get("Lane").toLowerCase()] || "thinkingCards",
+      status: get("Status") || "Active",
+      owner: get("Owner") || "Shared",
+      summary: body.replace(/^- .+\n?/gm, "").trim(),
+      tags: tagsRaw ? tagsRaw.split(/,\s*/) : [],
+    });
+  });
+}
+
+function parseAndFillSkill(raw) {
+  raw = raw.trim();
+  
+  // Try JSON first
+  try {
+    const obj = JSON.parse(raw);
+    if (obj && typeof obj === "object" && !Array.isArray(obj)) {
+      const skill = normalizeSkill(obj);
+      fillForm(skill);
+      skillId.value = "";
+      return;
+    }
+    if (Array.isArray(obj) && obj.length > 0) {
+      const skill = normalizeSkill(obj[0]);
+      fillForm(skill);
+      skillId.value = "";
+      return;
+    }
+  } catch {}
+
+  // Try Markdown: look for ### Title pattern
+  const mdMatch = raw.match(/^#+ (.+)/m);
+  const title = mdMatch ? mdMatch[1].trim() : raw.split("\n")[0].trim().substring(0, 80);
+  const get = (key) => { const m = raw.match(new RegExp("- " + key + ": (.+)", "i")); return m ? m[1].trim() : ""; };
+  const agentFromText = AGENTS.find(a => raw.toLowerCase().includes(a.toLowerCase())) || "Claude";
+  const summary = raw.replace(/^#+ .+\n?/gm,"").replace(/^- .+\n?/gm,"").trim() || raw;
+
+  fillForm(normalizeSkill({
+    id: "",
+    title,
+    agent: get("Agent") || agentFromText,
+    lane: { thinking: "thinkingCards", making: "makingCards", orchestrating: "orchestratingCards" }[(get("Lane")||"").toLowerCase()] || "thinkingCards",
+    status: get("Status") || "Active",
+    owner: get("Owner") || "Shared",
+    summary: summary.substring(0, 2000),
+    tags: (get("Tags") || get("tags")).split(/,\s*/).filter(Boolean),
+  }));
+  skillId.value = "";
+}
+
+document.querySelector("#parseSkillButton").addEventListener("click", () => {
+  const raw = document.querySelector("#pasteInput").value.trim();
+  if (!raw) return;
+  parseAndFillSkill(raw);
+  document.querySelector("#pasteInput").value = "";
+  titleInput.focus();
+  skillId.scrollIntoView({ behavior: "smooth", block: "start" });
+});
 render();
 
 const configuredSupabase = getConfiguredSupabase();
