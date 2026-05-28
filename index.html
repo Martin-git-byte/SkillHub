@@ -21,7 +21,6 @@
         <div class="quick-stats" aria-label="Hub summary">
           <div><strong id="skillCount">12</strong><span>skills</span></div>
           <div><strong>5</strong><span>agents</span></div>
-          <div><strong id="activeCount">12</strong><span>visible</span></div>
         </div>
       </header>
 
@@ -109,10 +108,6 @@
               </select>
             </label>
             <label>
-              <span>Owner</span>
-              <input id="ownerInput" maxlength="40" placeholder="Team, person, or agent" />
-            </label>
-            <label>
               <span>Tags</span>
               <input id="tagsInput" placeholder="research, release, QA" />
             </label>
@@ -126,7 +121,6 @@
         <div class="library-tools" aria-label="Library tools">
           <button id="exportJsonButton" class="ghost-button" type="button">Export JSON</button>
           <button id="exportMarkdownButton" class="ghost-button" type="button">Export MD</button>
-          <button id="exportToonButton" class="ghost-button" type="button">Export TOON</button>
           <label class="import-button">
             <span>Import JSON</span>
             <input id="importInput" type="file" accept="application/json,.json" />
@@ -141,32 +135,15 @@
           <h2>Shared library</h2>
           <p id="syncStatus">Local mode. Connect Supabase to share edits with other people.</p>
         </div>
-        <form id="supabaseForm" class="cloud-form">
+        <div class="cloud-form">
           <label>
             <span>Email login</span>
             <input id="emailInput" type="email" placeholder="person@example.com" />
           </label>
-          <div class="setup-panel">
-            <button id="advancedSetupButton" class="ghost-button" type="button">Advanced Setup</button>
-            <div id="credentialFields" class="credential-fields" hidden>
-              <label>
-                <span>Project URL</span>
-                <input id="supabaseUrlInput" type="url" placeholder="https://project.supabase.co" />
-              </label>
-              <label>
-                <span>Anon key</span>
-                <input id="supabaseKeyInput" type="password" placeholder="Paste public anon key" />
-              </label>
-            </div>
-          </div>
           <div class="cloud-actions">
-            <button class="primary-button" type="submit">Connect</button>
-            <button id="loginButton" class="ghost-button" type="button">Send Magic Link</button>
-            <button id="logoutButton" class="ghost-button" type="button">Log Out</button>
-            <button id="syncNowButton" class="ghost-button" type="button">Sync Now</button>
-            <button id="disconnectButton" class="ghost-button" type="button">Disconnect</button>
+            <button id="loginButton" class="primary-button" type="button">Send Magic Link</button>
           </div>
-        </form>
+        </div>
       </section>
 
       <section class="controls" aria-label="Skill filters">
